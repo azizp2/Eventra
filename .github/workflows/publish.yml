@@ -1,0 +1,49 @@
+name: Publish to NuGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: # Memungkinkan trigger manual dari tab Actions
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Environment ini harus cocok dengan yang di policy NuGet.org (jika diisi)
+    environment: release 
+    permissions:
+      id-token: write # Wajib untuk OIDC
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+        
+      - name: Pack Core
+        run: dotnet pack src/Eventra.Core/Eventra.Core.csproj -c Release -o ./nupkg --no-build
+        
+      - name: Pack EFCore
+        run: dotnet pack src/Eventra.EntityFrameworkCore/Eventra.EntityFrameworkCore.csproj -c Release -o ./nupkg --no-build
+        
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          # Menggunakan secret NUGET_USER yang sudah dibuat
+          user: ${{ secrets.NUGET_USER }}
+          
+      - name: Push to NuGet
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
