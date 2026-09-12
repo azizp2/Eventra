@@ -4,10 +4,9 @@
 
 **Domain Events for .NET — Simple, Clean, Powerful.**
 
-[![NuGet](https://img.shields.io/nuget/v/Eventra.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/Eventra)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/Eventra.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/Eventra)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/eventra/eventra/build.yml?branch=main&style=flat-square&logo=github)](https://github.com/eventra/eventra/actions)
-[![License](https://img.shields.io/github/license/eventra/eventra.svg?style=flat-square)](LICENSE)
+[![NuGet](https://img.shields.io/nuget/v/Eventra.Core.svg)](https://www.nuget.org/packages/Eventra.Core)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Eventra.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/Eventra.Core)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com)
 
 [Getting Started](#-getting-started) •
