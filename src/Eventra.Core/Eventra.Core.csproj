@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <PackageId>Cacah.Eventra</PackageId>
+    <PackageId>Eventra.Core</PackageId>
     <Version>1.0.0</Version>
     <Authors>Abdul Azis</Authors>
-    <Description>Domain Events framework di atas MediatR.</Description>
+    <Description>Simple Domain Event framework Built on MediatR + EF Core.</Description>
     <PackageProjectUrl>https://github.com/azizp2/Eventra</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -18,5 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>
