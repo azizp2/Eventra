@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventra — Domain Events for .NET</title>
+    <meta name="description" content="Simple Domain Events for .NET. Built on MediatR, integrated with EF Core.">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2318181b'/><text x='50' y='68' font-size='60' font-family='system-ui' font-weight='700' fill='%23fff' text-anchor='middle'>E</text></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Inter', 'system-ui', 'sans-serif'],
+                        mono: ['ui-monospace', '"SF Mono"', '"Cascadia Code"', '"Roboto Mono"', 'Menlo', 'monospace'],
+                    },
+                    colors: {
+                        ink: {
+                            50:  '#f7f7f8',
+                            100: '#eeeef0',
+                            200: '#d9d9de',
+                            300: '#b8b8c0',
+                            400: '#8e8e99',
+                            500: '#6b6b76',
+                            600: '#52525b',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            900: '#18181b',
+                            950: '#0c0c0e',
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .code-window {
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+        .code-window-header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+        }
+        .tk-keyword { color: #ff7b72; }
+        .tk-type    { color: #79c0ff; }
+        .tk-string  { color: #a5d6ff; }
+        .tk-comment { color: #8b949e; font-style: italic; }
+        .tk-fn      { color: #d2a8ff; }
+        .tk-punct   { color: #c9d1d9; }
+        .tk-number  { color: #79c0ff; }
+
+        /* Subtle grid background */
+        .grid-bg {
+            background-image:
+                    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .dark .grid-bg {
+            background-image:
+                    linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+        }
+        .grid-mask {
+            mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 40%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 40%, transparent 80%);
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-100 antialiased font-sans">
+
+<!-- ============ NAVBAR ============ -->
+<header class="sticky top-0 z-50 border-b border-ink-100 dark:border-ink-800 bg-white/80 dark:bg-ink-950/80 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-6">
+            <a href="#" class="flex items-center gap-2.5">
+                <span class="w-7 h-7 rounded-md bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 grid place-items-center font-bold text-sm">E</span>
+                <span class="font-semibold text-[15px] tracking-tight">Eventra</span>
+            </a>
+            <nav class="hidden md:flex items-center gap-6 text-sm text-ink-500 dark:text-ink-400">
+                <a href="#features" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Features</a>
+                <a href="#get-started" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Get Started</a>
+                <a href="#packages" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Packages</a>
+                <a href="#architecture" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Architecture</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="https://github.com/azizp2/Eventra" class="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-md text-sm text-ink-600 dark:text-ink-300 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-900 transition">
+                <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+                </svg>
+                GitHub
+            </a>
+            <a href="https://www.nuget.org/packages/Eventra.Core" class="inline-flex items-center h-9 px-3.5 rounded-md text-sm font-medium bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 hover:bg-ink-700 dark:hover:bg-ink-300 transition">
+                NuGet
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="relative overflow-hidden">
+    <div class="absolute inset-0 grid-bg grid-mask pointer-events-none"></div>
+    <div class="relative max-w-6xl mx-auto px-6 pt-20 pb-16 md:pt-28 md:pb-24">
+        <div class="max-w-3xl">
+            <a href="https://www.nuget.org/packages/Eventra.Core" class="inline-flex items-center gap-2 h-7 px-3 rounded-full border border-ink-200 dark:border-ink-800 text-xs text-ink-600 dark:text-ink-400 hover:border-ink-300 dark:hover:border-ink-700 transition mb-6">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="font-mono">v1.0.0</span>
+                <span class="text-ink-400 dark:text-ink-500">·</span>
+                <span>Available on NuGet</span>
+            </a>
+
+            <h1 class="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] text-ink-900 dark:text-ink-50">
+                Domain Events for .NET,<br>
+                <span class="text-ink-400 dark:text-ink-500">without the ceremony.</span>
+            </h1>
+
+            <p class="mt-6 text-lg text-ink-500 dark:text-ink-400 max-w-2xl leading-relaxed">
+                Raise domain events from your entities. Dispatch them automatically after
+                <code class="font-mono text-[0.9em] px-1.5 py-0.5 rounded bg-ink-100 dark:bg-ink-800 border border-ink-200 dark:border-ink-700">SaveChanges</code>.
+                Handle them with multiple handlers. Built on MediatR, integrated with EF Core.
+            </p>
+
+            <div class="mt-8 flex flex-wrap gap-3">
+                <a href="#get-started" class="inline-flex items-center h-10 px-5 rounded-md text-sm font-medium bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 hover:bg-ink-700 dark:hover:bg-ink-300 transition">
+                    Get Started
+                </a>
+                <a href="https://github.com/azizp2/Eventra" class="inline-flex items-center gap-2 h-10 px-5 rounded-md text-sm font-medium border border-ink-200 dark:border-ink-800 text-ink-700 dark:text-ink-300 hover:border-ink-300 dark:hover:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-900 transition">
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+
+        <!-- Hero code window -->
+        <div class="mt-14 rounded-xl overflow-hidden border border-ink-200 dark:border-ink-800 shadow-2xl shadow-ink-900/5 dark:shadow-black/40">
+            <div class="code-window code-window-header flex items-center justify-between px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-[#ff5f56]"></span>
+                    <span class="w-3 h-3 rounded-full bg-[#ffbd2e]"></span>
+                    <span class="w-3 h-3 rounded-full bg-[#27c93f]"></span>
+                    <span class="ml-3 text-xs font-mono text-ink-400">Product.cs</span>
+                </div>
+                <span class="text-xs font-mono text-ink-500">C#</span>
+            </div>
+            <div class="code-window">
+<pre class="p-6 text-[13px] leading-[1.7] font-mono overflow-x-auto"><code><span class="tk-keyword">public class</span> <span class="tk-type">Product</span> : <span class="tk-type">Entity</span>
+{
+    <span class="tk-keyword">public</span> <span class="tk-type">Guid</span> Id { <span class="tk-keyword">get</span>; <span class="tk-keyword">private set</span>; }
+    <span class="tk-keyword">public</span> <span class="tk-type">string</span> Name { <span class="tk-keyword">get</span>; <span class="tk-keyword">private set</span>; } = <span class="tk-string">""</span>;
+
+    <span class="tk-keyword">public static</span> <span class="tk-type">Product</span> <span class="tk-fn">Create</span>(<span class="tk-type">string</span> name)
+    {
+        <span class="tk-keyword">var</span> product = <span class="tk-keyword">new</span> <span class="tk-type">Product</span>
+        {
+            Id = <span class="tk-type">Guid</span>.<span class="tk-fn">NewGuid</span>(),
+            Name = name
+        };
+
+        <span class="tk-comment">// Raise event — dispatched after commit</span>
+        product.<span class="tk-fn">RaiseDomainEvent</span>(
+            <span class="tk-keyword">new</span> <span class="tk-type">ProductCreatedEvent</span>(product.Id, name));
+
+        <span class="tk-keyword">return</span> product;
+    }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section id="features" class="border-t border-ink-100 dark:border-ink-900">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+        <div class="max-w-2xl mb-14">
+            <div class="text-xs font-medium tracking-widest uppercase text-ink-400 dark:text-ink-500 mb-3">Features</div>
+            <h2 class="text-3xl md:text-4xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+                Everything you need. Nothing you don't.
+            </h2>
+            <p class="mt-4 text-ink-500 dark:text-ink-400 leading-relaxed">
+                A focused set of primitives for in-process domain events — without the complexity of Event Sourcing, Outbox Pattern, or distributed messaging.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-ink-100 dark:bg-ink-800 rounded-xl overflow-hidden border border-ink-100 dark:border-ink-800">
+            <div class="bg-white dark:bg-ink-950 p-7">
+                <div class="font-mono text-xs text-ink-400 dark:text-ink-500 mb-4">01</div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-2">Simple API</h3>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    Raise an event with a single line: <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">RaiseDomainEvent(...)</code>. No ceremony.
+                </p>
+            </div>
+            <div class="bg-white dark:bg-ink-950 p-7">
+                <div class="font-mono text-xs text-ink-400 dark:text-ink-500 mb-4">02</div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-2">Immutable events</h3>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    Events are <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">record</code>s — value-based equality, safe to pass around.
+                </p>
+            </div>
+            <div class="bg-white dark:bg-ink-950 p-7">
+                <div class="font-mono text-xs text-ink-400 dark:text-ink-500 mb-4">03</div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-2">Auto dispatch</h3>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    Events dispatch automatically after <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">SaveChanges</code> succeeds.
+                </p>
+            </div>
+            <div class="bg-white dark:bg-ink-950 p-7">
+                <div class="font-mono text-xs text-ink-400 dark:text-ink-500 mb-4">04</div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-2">Multiple handlers</h3>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    One event, many handlers. Add features without touching existing code.
+                </p>
+            </div>
+            <div class="bg-white dark:bg-ink-950 p-7">
+                <div class="font-mono text-xs text-ink-400 dark:text-ink-500 mb-4">05</div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-2">Error isolation</h3>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    Handler failures are logged, not rethrown. Your transaction stays safe.
+                </p>
+            </div>
+            <div class="bg-white dark:bg-ink-950 p-7">
+                <div class="font-mono text-xs text-ink-400 dark:text-ink-500 mb-4">06</div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-2">Post-commit dispatch</h3>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    Handlers only run when the database write actually succeeded.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ GET STARTED ============ -->
+<section id="get-started" class="border-t border-ink-100 dark:border-ink-900 bg-ink-50/50 dark:bg-ink-900/20">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+        <div class="max-w-2xl mb-12">
+            <div class="text-xs font-medium tracking-widest uppercase text-ink-400 dark:text-ink-500 mb-3">Get Started</div>
+            <h2 class="text-3xl md:text-4xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+                Four steps. Five minutes.
+            </h2>
+        </div>
+
+        <div class="space-y-10">
+            <!-- Step 1 -->
+            <div class="grid md:grid-cols-12 gap-6">
+                <div class="md:col-span-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-full bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 grid place-items-center text-xs font-semibold">1</span>
+                        <h3 class="font-semibold text-ink-900 dark:text-ink-50">Install</h3>
+                    </div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed ml-10">
+                        Add the core package. Add the EF Core package if you use it.
+                    </p>
+                </div>
+                <div class="md:col-span-8">
+                    <div class="rounded-lg overflow-hidden border border-ink-200 dark:border-ink-800">
+                        <div class="code-window code-window-header flex items-center justify-between px-4 py-2">
+                            <span class="text-xs font-mono text-ink-400">Terminal</span>
+                            <span class="text-xs font-mono text-ink-500">bash</span>
+                        </div>
+                        <div class="code-window">
+<pre class="p-4 text-[13px] leading-[1.7] font-mono overflow-x-auto"><code><span class="tk-fn">dotnet add package</span> Eventra.Core
+<span class="tk-fn">dotnet add package</span> Eventra.Core.EntityFrameworkCore</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="grid md:grid-cols-12 gap-6">
+                <div class="md:col-span-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-full bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 grid place-items-center text-xs font-semibold">2</span>
+                        <h3 class="font-semibold text-ink-900 dark:text-ink-50">Define an event</h3>
+                    </div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed ml-10">
+                        Events use <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">record</code> and inherit from <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">DomainEvent</code>.
+                    </p>
+                </div>
+                <div class="md:col-span-8">
+                    <div class="rounded-lg overflow-hidden border border-ink-200 dark:border-ink-800">
+                        <div class="code-window code-window-header flex items-center justify-between px-4 py-2">
+                            <span class="text-xs font-mono text-ink-400">ProductCreatedEvent.cs</span>
+                            <span class="text-xs font-mono text-ink-500">C#</span>
+                        </div>
+                        <div class="code-window">
+<pre class="p-4 text-[13px] leading-[1.7] font-mono overflow-x-auto"><code><span class="tk-keyword">public sealed record</span> <span class="tk-type">ProductCreatedEvent</span>(
+    <span class="tk-type">Guid</span> ProductId,
+    <span class="tk-type">string</span> ProductName
+) : <span class="tk-type">DomainEvent</span>;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="grid md:grid-cols-12 gap-6">
+                <div class="md:col-span-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-full bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 grid place-items-center text-xs font-semibold">3</span>
+                        <h3 class="font-semibold text-ink-900 dark:text-ink-50">Raise from entity</h3>
+                    </div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed ml-10">
+                        Inherit from <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">Entity</code> and call <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">RaiseDomainEvent</code>.
+                    </p>
+                </div>
+                <div class="md:col-span-8">
+                    <div class="rounded-lg overflow-hidden border border-ink-200 dark:border-ink-800">
+                        <div class="code-window code-window-header flex items-center justify-between px-4 py-2">
+                            <span class="text-xs font-mono text-ink-400">Product.cs</span>
+                            <span class="text-xs font-mono text-ink-500">C#</span>
+                        </div>
+                        <div class="code-window">
+<pre class="p-4 text-[13px] leading-[1.7] font-mono overflow-x-auto"><code><span class="tk-keyword">public class</span> <span class="tk-type">Product</span> : <span class="tk-type">Entity</span>
+{
+    <span class="tk-keyword">public static</span> <span class="tk-type">Product</span> <span class="tk-fn">Create</span>(<span class="tk-type">string</span> name)
+    {
+        <span class="tk-keyword">var</span> product = <span class="tk-keyword">new</span> <span class="tk-type">Product</span>
+        {
+            Id = <span class="tk-type">Guid</span>.<span class="tk-fn">NewGuid</span>(),
+            Name = name
+        };
+
+        product.<span class="tk-fn">RaiseDomainEvent</span>(
+            <span class="tk-keyword">new</span> <span class="tk-type">ProductCreatedEvent</span>(product.Id, name));
+
+        <span class="tk-keyword">return</span> product;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="grid md:grid-cols-12 gap-6">
+                <div class="md:col-span-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="w-7 h-7 rounded-full bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 grid place-items-center text-xs font-semibold">4</span>
+                        <h3 class="font-semibold text-ink-900 dark:text-ink-50">Save and dispatch</h3>
+                    </div>
+                    <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed ml-10">
+                        Events are dispatched after <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">SaveChanges</code> succeeds.
+                    </p>
+                </div>
+                <div class="md:col-span-8">
+                    <div class="rounded-lg overflow-hidden border border-ink-200 dark:border-ink-800">
+                        <div class="code-window code-window-header flex items-center justify-between px-4 py-2">
+                            <span class="text-xs font-mono text-ink-400">CreateProductCommandHandler.cs</span>
+                            <span class="text-xs font-mono text-ink-500">C#</span>
+                        </div>
+                        <div class="code-window">
+<pre class="p-4 text-[13px] leading-[1.7] font-mono overflow-x-auto"><code><span class="tk-keyword">var</span> product = <span class="tk-type">Product</span>.<span class="tk-fn">Create</span>(request.Name);
+_dbContext.Products.<span class="tk-fn">Add</span>(product);
+
+<span class="tk-keyword">await</span> _dbContext.<span class="tk-fn">SaveChangesAndDispatchEventsAsync</span>(
+    _dispatcher, cancellationToken);
+
+<span class="tk-keyword">return</span> product.Id;</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section id="architecture" class="border-t border-ink-100 dark:border-ink-900">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+        <div class="max-w-2xl mb-12">
+            <div class="text-xs font-medium tracking-widest uppercase text-ink-400 dark:text-ink-500 mb-3">Architecture</div>
+            <h2 class="text-3xl md:text-4xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+                Clean separation, by design.
+            </h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-10 items-start">
+            <div>
+                <h3 class="font-semibold text-ink-900 dark:text-ink-50 mb-3">Two packages, one purpose.</h3>
+                <p class="text-ink-500 dark:text-ink-400 leading-relaxed mb-4">
+                    <span class="font-medium text-ink-700 dark:text-ink-300">Eventra.Core</span> contains abstractions and base classes. No EF Core dependency.
+                    <span class="font-medium text-ink-700 dark:text-ink-300">Eventra.Core.EntityFrameworkCore</span> adds the integration — and depends on Core.
+                </p>
+                <p class="text-ink-500 dark:text-ink-400 leading-relaxed">
+                    This separation means EF Core is entirely optional. The core package has no dependency on any data access technology.
+                </p>
+
+                <ul class="mt-8 divide-y divide-ink-100 dark:divide-ink-800 border-y border-ink-100 dark:border-ink-800">
+                    <li class="flex items-baseline gap-4 py-3">
+                        <code class="font-mono text-sm text-ink-900 dark:text-ink-100 shrink-0">IDomainEvent</code>
+                        <span class="text-sm text-ink-500 dark:text-ink-400">Base contract for all events</span>
+                    </li>
+                    <li class="flex items-baseline gap-4 py-3">
+                        <code class="font-mono text-sm text-ink-900 dark:text-ink-100 shrink-0">Entity</code>
+                        <span class="text-sm text-ink-500 dark:text-ink-400">Base class with <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">RaiseDomainEvent</code></span>
+                    </li>
+                    <li class="flex items-baseline gap-4 py-3">
+                        <code class="font-mono text-sm text-ink-900 dark:text-ink-100 shrink-0">IDomainEventDispatcher</code>
+                        <span class="text-sm text-ink-500 dark:text-ink-400">Dispatches events to handlers</span>
+                    </li>
+                    <li class="flex items-baseline gap-4 py-3">
+                        <code class="font-mono text-sm text-ink-900 dark:text-ink-100 shrink-0">SaveChangesAndDispatchEventsAsync</code>
+                        <span class="text-sm text-ink-500 dark:text-ink-400">EF Core extension</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="rounded-xl overflow-hidden border border-ink-200 dark:border-ink-800">
+                <div class="code-window code-window-header flex items-center justify-between px-4 py-2">
+                    <span class="text-xs font-mono text-ink-400">Flow</span>
+                    <span class="text-xs font-mono text-ink-500">diagram</span>
+                </div>
+                <div class="code-window">
+<pre class="p-5 text-[12.5px] leading-[1.75] font-mono overflow-x-auto"><code><span class="tk-comment">1. Command Handler</span>
+   <span class="tk-fn">Product.Create</span>(<span class="tk-string">"Kopi"</span>)
+   └─► <span class="tk-fn">RaiseDomainEvent</span>(ProductCreatedEvent)
+
+<span class="tk-comment">2. DbContext</span>
+   <span class="tk-fn">SaveChangesAndDispatchEventsAsync</span>()
+   ├─► <span class="tk-fn">SaveChangesAsync</span>()    ──► DB
+   ├─► <span class="tk-fn">ClearDomainEvents</span>()
+   └─► <span class="tk-fn">DispatchAsync</span>()
+
+<span class="tk-comment">3. Dispatcher</span>
+   <span class="tk-keyword">foreach</span> evt <span class="tk-keyword">in</span> events:
+   └─► <span class="tk-fn">mediator.Publish</span>(evt)
+       └─► Handlers (parallel)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ PACKAGES ============ -->
+<section id="packages" class="border-t border-ink-100 dark:border-ink-900 bg-ink-50/50 dark:bg-ink-900/20">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+        <div class="max-w-2xl mb-12">
+            <div class="text-xs font-medium tracking-widest uppercase text-ink-400 dark:text-ink-500 mb-3">Packages</div>
+            <h2 class="text-3xl md:text-4xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+                Install what you need.
+            </h2>
+            <p class="mt-4 text-ink-500 dark:text-ink-400 leading-relaxed">
+                Two packages. Pick what fits your stack.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5">
+            <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-6 bg-white dark:bg-ink-950">
+                <div class="flex items-center justify-between mb-3">
+                    <code class="font-mono text-sm font-semibold text-ink-900 dark:text-ink-100">Eventra.Core</code>
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-400 font-medium">required</span>
+                </div>
+                <p class="text-sm text-ink-500 dark:text-ink-400 mb-4 leading-relaxed">
+                    Core abstractions, base classes, dispatcher. No EF Core dependency.
+                </p>
+                <div class="font-mono text-[12.5px] text-ink-600 dark:text-ink-400 bg-ink-50 dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-md px-3 py-2 overflow-x-auto whitespace-nowrap">
+                    dotnet add package Eventra.Core
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-ink-200 dark:border-ink-800 p-6 bg-white dark:bg-ink-950">
+                <div class="flex items-center justify-between mb-3">
+                    <code class="font-mono text-sm font-semibold text-ink-900 dark:text-ink-100">Eventra.Core.EntityFrameworkCore</code>
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-400 font-medium">optional</span>
+                </div>
+                <p class="text-sm text-ink-500 dark:text-ink-400 mb-4 leading-relaxed">
+                    EF Core integration. Adds <code class="font-mono text-[0.85em] px-1 py-0.5 rounded bg-ink-100 dark:bg-ink-800">SaveChangesAndDispatchEventsAsync</code>.
+                </p>
+                <div class="font-mono text-[12.5px] text-ink-600 dark:text-ink-400 bg-ink-50 dark:bg-ink-900 border border-ink-100 dark:border-ink-800 rounded-md px-3 py-2 overflow-x-auto whitespace-nowrap">
+                    dotnet add package Eventra.Core.EntityFrameworkCore
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ NON-GOALS ============ -->
+<section class="border-t border-ink-100 dark:border-ink-900">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+        <div class="max-w-3xl">
+            <div class="text-xs font-medium tracking-widest uppercase text-ink-400 dark:text-ink-500 mb-3">Non-Goals</div>
+            <h2 class="text-2xl md:text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50 mb-6">
+                What Eventra is not.
+            </h2>
+            <p class="text-ink-500 dark:text-ink-400 leading-relaxed mb-6">
+                Eventra focuses on <span class="text-ink-700 dark:text-ink-300 font-medium">in-process domain events</span>. It deliberately does not implement:
+            </p>
+            <ul class="space-y-2 text-ink-500 dark:text-ink-400">
+                <li class="flex items-start gap-3">
+                    <span class="text-ink-400 dark:text-ink-500 font-mono text-sm mt-0.5">×</span>
+                    <span>Event Sourcing</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="text-ink-400 dark:text-ink-500 font-mono text-sm mt-0.5">×</span>
+                    <span>Outbox Pattern</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="text-ink-400 dark:text-ink-500 font-mono text-sm mt-0.5">×</span>
+                    <span>Distributed messaging (Kafka, RabbitMQ)</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="text-ink-400 dark:text-ink-500 font-mono text-sm mt-0.5">×</span>
+                    <span>Automatic retry</span>
+                </li>
+            </ul>
+            <p class="text-sm text-ink-400 dark:text-ink-500 mt-6">
+                If you need these, consider EventFlow, Marten, or MassTransit.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="border-t border-ink-100 dark:border-ink-900">
+    <div class="max-w-6xl mx-auto px-6 py-20 text-center">
+        <h2 class="text-2xl md:text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50 mb-3">
+            Ready to get started?
+        </h2>
+        <p class="text-ink-500 dark:text-ink-400 max-w-md mx-auto mb-8">
+            Install the packages and start raising domain events in minutes.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-center">
+            <a href="https://github.com/azizp2/Eventra" class="inline-flex items-center h-10 px-5 rounded-md text-sm font-medium bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 hover:bg-ink-700 dark:hover:bg-ink-300 transition">
+                Read the Docs
+            </a>
+            <a href="https://www.nuget.org/packages/Eventra.Core" class="inline-flex items-center h-10 px-5 rounded-md text-sm font-medium border border-ink-200 dark:border-ink-800 text-ink-700 dark:text-ink-300 hover:border-ink-300 dark:hover:border-ink-700 hover:bg-ink-50 dark:hover:bg-ink-900 transition">
+                View on NuGet
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="border-t border-ink-100 dark:border-ink-900">
+    <div class="max-w-6xl mx-auto px-6 py-12">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+            <div class="col-span-2 md:col-span-1">
+                <div class="flex items-center gap-2.5 mb-3">
+                    <span class="w-6 h-6 rounded bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 grid place-items-center font-bold text-xs">E</span>
+                    <span class="font-semibold text-sm">Eventra</span>
+                </div>
+                <p class="text-sm text-ink-500 dark:text-ink-400 leading-relaxed">
+                    Simple Domain Events for .NET.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-ink-900 dark:text-ink-100 mb-3">Product</h4>
+                <ul class="space-y-2 text-sm text-ink-500 dark:text-ink-400">
+                    <li><a href="#features" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Features</a></li>
+                    <li><a href="#get-started" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Get Started</a></li>
+                    <li><a href="#packages" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Packages</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-ink-900 dark:text-ink-100 mb-3">Resources</h4>
+                <ul class="space-y-2 text-sm text-ink-500 dark:text-ink-400">
+                    <li><a href="https://github.com/azizp2/Eventra" class="hover:text-ink-900 dark:hover:text-ink-100 transition">GitHub</a></li>
+                    <li><a href="https://github.com/azizp2/Eventra/blob/main/README.md" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Documentation</a></li>
+                    <li><a href="https://github.com/azizp2/Eventra/issues" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Issues</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-ink-900 dark:text-ink-100 mb-3">Community</h4>
+                <ul class="space-y-2 text-sm text-ink-500 dark:text-ink-400">
+                    <li><a href="https://github.com/azizp2/Eventra/discussions" class="hover:text-ink-900 dark:hover:text-ink-100 transition">Discussions</a></li>
+                    <li><a href="https://github.com/azizp2/Eventra/blob/main/LICENSE" class="hover:text-ink-900 dark:hover:text-ink-100 transition">License</a></li>
+                    <li><a href="https://www.nuget.org/packages/Eventra.Core" class="hover:text-ink-900 dark:hover:text-ink-100 transition">NuGet</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="pt-8 border-t border-ink-100 dark:border-ink-800 flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-ink-500 dark:text-ink-400">
+            <p>© 2026 Eventra · MIT License</p>
+            <p>Made by <a href="https://github.com/azizp2" class="text-ink-900 dark:text-ink-100 hover:underline">Abdul Azis</a></p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
