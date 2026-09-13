@@ -21,9 +21,8 @@ services.AddDbContext<AppDbContext>(opts =>
 
 // Register Domain Events + MediatR.
 // Assembly yang di-scan: SampleApp (handler + command) dan Core (dispatcher).
-services.AddDomainEvents(
-    typeof(Program).Assembly,
-    typeof(Eventra.Core.Abstractions.IDomainEvent).Assembly);
+services.AddEventra(
+    typeof(Program).Assembly);
 
 var provider = services.BuildServiceProvider();
 

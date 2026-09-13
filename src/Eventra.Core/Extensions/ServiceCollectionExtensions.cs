@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">Service collection.</param>
     /// <param name="assemblies">Assembly yang akan di-scan untuk handler.</param>
-    public static IServiceCollection AddDomainEvents(
+    public static IServiceCollection AddEventra(
         this IServiceCollection services,
         params Assembly[] assemblies)
     {

@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace Eventra.Core.Abstractions;
 
 public interface IDomainEventDispatcher

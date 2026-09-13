@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Eventra.Core.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -8,10 +12,12 @@ namespace Eventra.Core.Dispatchers;
 /// Implementasi default dari <see cref="IDomainEventDispatcher"/>.
 /// Menggunakan MediatR untuk mem-publish event ke semua handler-nya.
 /// </summary>
+/// 
 public sealed class DomainEventDispatcher : IDomainEventDispatcher
 {
     private readonly IMediator _mediator;
     private readonly ILogger<DomainEventDispatcher> _logger;
+    private IDomainEventDispatcher _domainEventDispatcherImplementation;
 
     public DomainEventDispatcher(
         IMediator mediator,
@@ -22,6 +28,7 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
     }
 
     /// <inheritdoc />
+    /// 
     public async Task DispatchAsync(
         IEnumerable<IDomainEvent> domainEvents,
         CancellationToken cancellationToken = default)

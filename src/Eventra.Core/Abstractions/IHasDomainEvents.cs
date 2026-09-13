@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Eventra.Core.Abstractions;
 
 public interface IHasDomainEvents
