@@ -6,5 +6,4 @@ namespace Eventra.Core.BaseClasses;
 /// </summary>
 public abstract class AggregateRoot : Entity
 {
-
 }
