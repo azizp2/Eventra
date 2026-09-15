@@ -87,7 +87,7 @@ dotnet add package Eventra.EntityFrameworkCore
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="Eventra-Core" Version="1.0.1" />
+  <PackageReference Include="Eventra.Core" Version="1.0.1" />
   <PackageReference Include="Eventra.EntityFrameworkCore" Version="1.0.1" />
 </ItemGroup>
 ```

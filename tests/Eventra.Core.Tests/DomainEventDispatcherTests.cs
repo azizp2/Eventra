@@ -38,7 +38,7 @@ public class DomainEventDispatcherTests
         //    karena dispatcher memanggil Publish<IDomainEvent>.
         mediatorMock.Verify(
             m => m.Publish(
-                It.Is<IDomainEvent>(e => e == domainEvent),
+                It.Is<IDomainEvent>(e => ReferenceEquals(e, domainEvent)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -91,13 +91,13 @@ public class DomainEventDispatcherTests
         //    Kita match berdasarkan instance-nya.
         mediatorMock
             .Setup(m => m.Publish(
-                It.Is<IDomainEvent>(e => e == failingEvent),
+                It.Is<IDomainEvent>(e => ReferenceEquals(e, failingEvent)),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Boom!"));
 
         mediatorMock
             .Setup(m => m.Publish(
-                It.Is<IDomainEvent>(e => e == succeedingEvent),
+                It.Is<IDomainEvent>(e => ReferenceEquals(e, succeedingEvent)),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
@@ -121,13 +121,13 @@ public class DomainEventDispatcherTests
         // Kedua event tetap dicoba untuk dipublish.
         mediatorMock.Verify(
             m => m.Publish(
-                It.Is<IDomainEvent>(e => e == failingEvent),
+                It.Is<IDomainEvent>(e => ReferenceEquals(e, failingEvent)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
         mediatorMock.Verify(
             m => m.Publish(
-                It.Is<IDomainEvent>(e => e == succeedingEvent),
+                It.Is<IDomainEvent>(e => ReferenceEquals(e, succeedingEvent)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
