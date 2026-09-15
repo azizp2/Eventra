@@ -4,7 +4,6 @@ namespace Eventra.SampleApp.Entity;
 
 public class Product : Core.BaseClasses.Entity
 {
-    public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
 
     // Constructor private untuk EF Core.

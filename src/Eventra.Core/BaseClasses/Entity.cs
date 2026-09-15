@@ -2,10 +2,19 @@ using Eventra.Core.Abstractions;
 
 namespace Eventra.Core.BaseClasses;
 
-public abstract class Entity : IHasDomainEvents
+/// <summary>
+/// Base class untuk semua entity dengan identitas bertipe <typeparamref name="TId"/>.
+/// </summary>
+/// <typeparam name="TId">Tipe identitas (Guid, int, string, dll).</typeparam>
+public abstract class Entity<TId> : IHasDomainEvents
+    where TId : notnull
 {
-    // List private: hanya bisa dimodifikasi dari dalam class ini.
     private readonly List<IDomainEvent> _domainEvents = new();
+
+    /// <summary>
+    /// Identitas unik entity.
+    /// </summary>
+    public TId Id { get; protected set; } = default!;
 
     /// <inheritdoc />
     public IReadOnlyCollection<IDomainEvent> DomainEvents
@@ -27,4 +36,12 @@ public abstract class Entity : IHasDomainEvents
     {
         _domainEvents.Clear();
     }
+}
+
+/// <summary>
+/// Base class untuk entity dengan identitas <see cref="Guid"/>.
+/// Alias untuk backward compatibility.
+/// </summary>
+public abstract class Entity : Entity<Guid>
+{
 }
