@@ -77,7 +77,7 @@ susah diubah, dan susah di-test.
 
 ```bash
 # Core (wajib)
-dotnet add package Eventra
+dotnet add package Eventra.Core
 
 # Integrasi EF Core (opsional)
 dotnet add package Eventra.EntityFrameworkCore
@@ -87,8 +87,8 @@ dotnet add package Eventra.EntityFrameworkCore
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="Eventra" Version="1.0.0" />
-  <PackageReference Include="Eventra.EntityFrameworkCore" Version="1.0.0" />
+  <PackageReference Include="Eventra-Core" Version="1.0.1" />
+  <PackageReference Include="Eventra.EntityFrameworkCore" Version="1.0.1" />
 </ItemGroup>
 ```
 
