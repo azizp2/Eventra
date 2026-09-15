@@ -14,9 +14,10 @@ public abstract record DomainEvent : IDomainEvent
     /// Constructor yang menginisialisasi Id dan OccurredOn.
     /// Menggunakan <see cref="DateTime.UtcNow"/> agar konsisten di semua timezone.
     /// </summary>
-    protected DomainEvent()
+    protected DomainEvent(TimeProvider? timeProvider = null)
     {
+        var now = (timeProvider ?? TimeProvider.System).GetUtcNow();
         Id = Guid.NewGuid();
-        OccurredOn = DateTime.UtcNow;
+        OccurredOn = now.UtcDateTime;
     }
 }
