@@ -9,7 +9,7 @@ namespace Eventra.Core.Tests;
 
 public class DomainEventDispatcherTests
 {
-    private sealed class TestEvent(string Payload) : DomainEvent
+    private sealed record TestEvent(string Payload) : DomainEvent
     {
         public string Payload { get; init; } = Payload;
 

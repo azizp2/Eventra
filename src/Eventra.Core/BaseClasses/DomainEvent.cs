@@ -2,7 +2,7 @@ using Eventra.Core.Abstractions;
 
 namespace Eventra.Core.BaseClasses;
 
-public abstract class DomainEvent : IDomainEvent
+public abstract record DomainEvent : IDomainEvent
 {
     /// <inheritdoc />
     public Guid Id { get; }
