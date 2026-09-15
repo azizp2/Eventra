@@ -17,7 +17,6 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
 {
     private readonly IMediator _mediator;
     private readonly ILogger<DomainEventDispatcher> _logger;
-    private IDomainEventDispatcher _domainEventDispatcherImplementation;
 
     public DomainEventDispatcher(
         IMediator mediator,
