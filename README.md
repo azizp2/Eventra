@@ -2,16 +2,17 @@
 
 # ⚡ Eventra
 
-**Domain Events for .NET — Simple, Clean, Powerful.**
+**Domain Events for .NET — Simple, Clean, Zero Dependency.**
 
 [![NuGet](https://img.shields.io/nuget/v/Eventra.Core.svg)](https://www.nuget.org/packages/Eventra.Core)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/Eventra.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/Eventra.Core)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Eventra.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/Eventra.Core)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com)
 
 [Getting Started](#-getting-started) •
-[Documentation](#-documentation) •
-[Samples](#-samples) •
+[Packages](#-packages) •
+[Documentation](https://azizp2.github.io/EventraDocs) •
+[Samples](https://azizp2.github.io/EventraDocs/) •
 [Contributing](#-contributing)
 
 </div>
@@ -20,15 +21,16 @@
 
 ## ✨ Apa Itu Eventra?
 
-**Eventra** adalah framework **Domain Event** ringan untuk .NET, dibangun di atas
-[MediatR](https://github.com/jbogard/MediatR) dan terintegrasi dengan
-**Entity Framework Core**.
+**Eventra** adalah framework **Domain Event** ringan untuk .NET dengan
+**built-in dispatcher** — **tanpa MediatR**, **tanpa external dependency**.
 
-Cocok untuk project yang menggunakan **Clean Architecture + CQRS** dan ingin
-menambahkan konsep **Domain Event** ala DDD — tanpa kerumitan Event Sourcing,
+Cocok untuk project yang menggunakan **Clean Architecture + DDD** dan ingin
+menambahkan konsep **Domain Event** tanpa kerumitan Event Sourcing,
 Outbox Pattern, atau distributed event.
 
-> **Filosofi:** *"Domain events, made simple."*
+> **Filosofi:** *"Domain events, made simple — zero dependency."*
+
+📖 **Dokumentasi lengkap:** [eventra.dev/docs](https://azizp2.github.io/EventraDocs/)
 
 ---
 
@@ -58,22 +60,40 @@ susah diubah, dan susah di-test.
 
 | Fitur | Deskripsi |
 | :--- | :--- |
+| ✅ **Zero Dependency** | Hanya butuh `Microsoft.Extensions.*` — tanpa MediatR. |
+| ✅ **Built-in Dispatcher** | Dispatcher sendiri, tanpa pihak ketiga. |
 | ✅ **Simple API** | `RaiseDomainEvent(...)` — selesai. |
 | ✅ **Immutable Events** | Pakai `record`, aman dari mutasi. |
 | ✅ **Auto Dispatch** | Event otomatis jalan setelah `SaveChanges`. |
 | ✅ **Multi-Handler** | Satu event bisa punya banyak handler. |
-| ✅ **Error Isolation** | Error di handler tidak menggagalkan transaksi. |
+| ✅ **Atomic per Event** | Error di handler tidak menggagalkan event lain. |
 | ✅ **DI-Friendly** | Handler auto-register via assembly scanning. |
 | ✅ **EF Core Integration** | Extension `SaveChangesAndDispatchEventsAsync`. |
 | ✅ **Framework-Agnostic** | Bisa dipakai tanpa EF Core (Dapper, NHibernate, dll). |
-| ✅ **Multi-Target** | Support .NET 8 & .NET 10. |
-| ✅ **Well-Documented** | XML docs untuk semua public API. |
 
 ---
 
-## 📦 Instalasi
+## 📦 Packages
 
-### Via .NET CLI
+Eventra terdiri dari **3 package**:
+
+| Package | Deskripsi | Dependency |
+| :--- | :--- | :--- |
+| **`Eventra.Abstractions`** | Interface only — **zero dependency**. | ❌ Tidak ada |
+| **`Eventra.Core`** | Base class + built-in dispatcher. | `Microsoft.Extensions.*` |
+| **`Eventra.EntityFrameworkCore`** | Integrasi EF Core. | `Microsoft.EntityFrameworkCore` |
+
+### 📊 Install Matrix
+
+| Skenario | Install |
+| :--- | :--- |
+| **Built-in + EF Core** | `Eventra.Core` + `Eventra.EntityFrameworkCore` |
+| **Built-in tanpa EF Core** | `Eventra.Core` |
+| **Interface only** (custom dispatcher) | `Eventra.Abstractions` |
+
+---
+
+## 📥 Instalasi
 
 ```bash
 # Core (wajib)
@@ -83,15 +103,6 @@ dotnet add package Eventra.Core
 dotnet add package Eventra.EntityFrameworkCore
 ```
 
-### Via PackageReference
-
-```xml
-<ItemGroup>
-  <PackageReference Include="Eventra.Core" Version="1.0.1" />
-  <PackageReference Include="Eventra.EntityFrameworkCore" Version="1.0.1" />
-</ItemGroup>
-```
-
 ---
 
 ## 🏁 Getting Started
@@ -99,24 +110,12 @@ dotnet add package Eventra.EntityFrameworkCore
 ### 1. Setup DI
 
 ```csharp
-var builder = WebApplication.CreateBuilder(args);
-
-// Register DbContext.
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-
-// Register Eventra + MediatR.
 builder.Services.AddEventra(
-    typeof(Program).Assembly,                    // assembly Anda (berisi handler)
-    typeof(ProductCreatedEvent).Assembly);       // assembly event
-
-var app = builder.Build();
-app.Run();
+    typeof(Program).Assembly,
+    typeof(ProductCreatedEvent).Assembly);
 ```
 
 ### 2. Definisikan Event
-
-Gunakan `record` agar immutable, dan warisi `DomainEvent`:
 
 ```csharp
 using Eventra.Core.BaseClasses;
@@ -129,17 +128,14 @@ public sealed record ProductCreatedEvent(
 
 ### 3. Buat Entity
 
-Warisi `Entity` (atau `AggregateRoot`):
-
 ```csharp
 using Eventra.Core.BaseClasses;
 
 public class Product : Entity
 {
-    public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
 
-    private Product() { } // EF Core
+    private Product() { }
 
     public static Product Create(string name)
     {
@@ -149,9 +145,7 @@ public class Product : Entity
             Name = name
         };
 
-        // Raise event — akan di-dispatch setelah SaveChanges sukses.
         product.RaiseDomainEvent(new ProductCreatedEvent(product.Id, name));
-
         return product;
     }
 }
@@ -159,10 +153,8 @@ public class Product : Entity
 
 ### 4. Buat Handler
 
-Implement `IDomainEventHandler<T>`:
-
 ```csharp
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 using Microsoft.Extensions.Logging;
 
 public sealed class SendEmailOnProductCreatedHandler
@@ -176,13 +168,13 @@ public sealed class SendEmailOnProductCreatedHandler
         _logger = logger;
     }
 
-    public Task Handle(
-        ProductCreatedEvent notification,
-        CancellationToken cancellationToken)
+    public Task HandleAsync(
+        ProductCreatedEvent domainEvent,
+        CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(
-            "📧 Produk {Name} dibuat. Kirim email ke admin...",
-            notification.ProductName);
+            "📧 Produk {Name} dibuat. Kirim email...",
+            domainEvent.ProductName);
 
         return Task.CompletedTask;
     }
@@ -192,202 +184,106 @@ public sealed class SendEmailOnProductCreatedHandler
 ### 5. Simpan + Dispatch
 
 ```csharp
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 using Eventra.EntityFrameworkCore.Extensions;
 
-public sealed class CreateProductCommandHandler
-    : IRequestHandler<CreateProductCommand, Guid>
-{
-    private readonly AppDbContext _dbContext;
-    private readonly IDomainEventDispatcher _dispatcher;
+var product = Product.Create("Kopi Arabica");
+_dbContext.Products.Add(product);
 
-    public CreateProductCommandHandler(
-        AppDbContext dbContext,
-        IDomainEventDispatcher dispatcher)
+await _dbContext.SaveChangesAndDispatchEventsAsync(_dispatcher, ct);
+```
+
+**Selesai!** 🎉
+
+📖 **Panduan lengkap:** [eventra.dev/docs/getting-started](https://azizp2.github.io/EventraDocs/getting-started)
+
+---
+
+## 🎯 Contoh Lain
+
+### Banyak Handler untuk 1 Event
+
+```csharp
+// Handler 1: Kirim email
+public sealed class SendEmailHandler : IDomainEventHandler<ProductCreatedEvent>
+{
+    public Task HandleAsync(ProductCreatedEvent e, CancellationToken ct = default)
+        => _email.SendAsync(e.CustomerEmail, "Produk dibuat", ct);
+}
+
+// Handler 2: Audit log
+public sealed class AuditLogHandler : IDomainEventHandler<ProductCreatedEvent>
+{
+    public Task HandleAsync(ProductCreatedEvent e, CancellationToken ct = default)
+        => _audit.LogAsync($"ProductCreated: {e.ProductId}", ct);
+}
+
+// Handler 3: Update cache
+public sealed class UpdateCacheHandler : IDomainEventHandler<ProductCreatedEvent>
+{
+    public Task HandleAsync(ProductCreatedEvent e, CancellationToken ct = default)
+        => _cache.SetAsync($"product:{e.ProductId}", e.ProductName, ct);
+}
+```
+
+### Aggregate Root
+
+```csharp
+public sealed class Order : AggregateRoot
+{
+    public Guid CustomerId { get; private set; }
+    public OrderStatus Status { get; private set; }
+
+    private Order() { }
+
+    public static Order Create(Guid customerId)
     {
-        _dbContext = dbContext;
-        _dispatcher = dispatcher;
+        var order = new Order
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = customerId,
+            Status = OrderStatus.Draft
+        };
+
+        order.RaiseDomainEvent(new OrderCreatedEvent(order.Id, customerId));
+        return order;
     }
 
-    public async Task<Guid> Handle(
-        CreateProductCommand request,
-        CancellationToken cancellationToken)
+    public void Submit()
     {
-        var product = Product.Create(request.Name);
-        _dbContext.Products.Add(product);
+        if (Status != OrderStatus.Draft)
+            throw new InvalidOperationException("Order already submitted.");
 
-        // Commit + dispatch event otomatis.
-        await _dbContext.SaveChangesAndDispatchEventsAsync(
-            _dispatcher,
-            cancellationToken);
-
-        return product.Id;
+        Status = OrderStatus.Submitted;
+        RaiseDomainEvent(new OrderSubmittedEvent(Id, CustomerId));
     }
 }
 ```
 
-**Selesai!** Event akan otomatis di-dispatch ke semua handler setelah commit.
+### EF Core — Ignore DomainEvents
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Product>()
+        .Ignore(p => p.DomainEvents);
+}
+```
+
+📖 **Contoh lainnya:** [eventra.dev/samples](https://azizp2.github.io/EventraDocs/)
 
 ---
 
-## 📚 Documentation
+## 🛡️ Error Handling
 
-### Konsep Dasar
+Eventra **atomic per event**:
 
-| Konsep | Penjelasan |
-| :--- | :--- |
-| **Domain Event** | Sesuatu yang terjadi di domain, yang menarik untuk diketahui. |
-| **Entity** | Objek domain yang punya identitas unik. |
-| **Aggregate Root** | Entity utama yang jadi pintu masuk aggregate. |
-| **Handler** | Kode yang bereaksi terhadap event. |
-| **Dispatcher** | Yang mengirim event ke handler. |
+- ✅ Semua handler untuk 1 event harus sukses.
+- ❌ Jika 1 handler gagal → handler lain di event itu **tidak jalan**.
+- ✅ Event berikutnya **tetap diproses**.
+- ✅ Exception **tidak** dilempar ke caller — hanya di-log.
 
-### Arsitektur
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Command Handler                         │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ 1. product = Product.Create(name)                     │  │
-│  │ 2. dbContext.Products.Add(product)                    │  │
-│  │ 3. dbContext.SaveChangesAndDispatchEventsAsync(...)   │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              DbContextExtensions                            │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ 1. Kumpulkan entity yang punya DomainEvents           │  │
-│  │ 2. Snapshot event-nya ke list                         │  │
-│  │ 3. SaveChangesAsync() ──────► Database                │  │
-│  │ 4. ClearDomainEvents() di entity                      │  │
-│  │ 5. dispatcher.DispatchAsync(events)                   │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              DomainEventDispatcher                          │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ foreach event:                                        │  │
-│  │   try { mediator.Publish(event) }                     │  │
-│  │   catch { logger.LogError(...) }  ← tidak rethrow     │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                        MediatR                              │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
-│  │ Handler A       │  │ Handler B       │  │ Handler C   │ │
-│  │ (Send Email)    │  │ (Audit Log)     │  │ (Update     │ │
-│  │                 │  │                 │  │  Cache)     │ │
-│  └─────────────────┘  └─────────────────┘  └─────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Struktur Project
-
-```
-Eventra/
- ┣ 📂 src
- ┃ ┣ 📂 Eventra.Core                    ← Abstraksi, base class, dispatcher
- ┃ ┗ 📂 Eventra.EntityFrameworkCore     ← Integrasi EF Core
- ┣ 📂 samples
- ┃ ┗ 📂 Eventra.SampleApp               ← Contoh console app
- ┣ 📂 tests
- ┃ ┗ 📂 Eventra.Core.Tests              ← Unit test
- ┣ 📜 Eventra.sln
- ┗ 📜 README.md
-```
-
-### Keputusan Desain Penting
-
-| Keputusan | Alasan |
-| :--- | :--- |
-| Event di-snapshot **sebelum** `SaveChanges` | Agar event tidak terpengaruh oleh perubahan state EF Core setelah commit. |
-| Event di-clear **setelah** `SaveChanges` | Jika `SaveChanges` gagal, event tetap tersimpan di entity (untuk potensi retry di masa depan). |
-| Dispatch **setelah** commit | Memastikan handler hanya jalan kalau data benar-benar tersimpan. |
-| Error di handler **di-catch** | Transaksi utama sudah commit; error di efek samping tidak boleh menggagalkan operasi bisnis. |
-| Dispatcher di-register sebagai **Scoped** | Karena `IMediator` juga Scoped, dan dispatcher bergantung padanya. |
-| Event pakai `record` | Immutable, value-based equality, cocok untuk event. |
-| `Core` dan `EFCore` dipisah | Biar `Core` tidak terkunci ke EF Core. Bisa dipakai dengan Dapper, NHibernate, dll. |
-
----
-
-## 🎮 Samples
-
-Lihat folder [`samples/`](samples) untuk contoh lengkap.
-
-### Menjalankan Sample
-
-```bash
-cd samples/Eventra.SampleApp
-dotnet run
-```
-
-**Output:**
-
-```
-=== Membuat produk pertama ===
-info: Eventra.Core.Dispatchers.DomainEventDispatcher[0]
-      Dispatching domain event: ProductCreatedEvent (Id: ...)
-info: Eventra.SampleApp.SendEmailOnProductCreatedHandler[0]
-      📧 [EMAIL] Produk 'Kopi Arabica' (Id: ...) baru dibuat. Kirim email...
-info: Eventra.SampleApp.LogOnProductCreatedHandler[0]
-      📝 [AUDIT LOG] Produk 'Kopi Arabica' dibuat pada ... UTC.
-Produk dibuat dengan Id: ...
-
-=== Membuat produk kedua ===
-...
-```
-
----
-
-## 🧪 Testing
-
-```bash
-dotnet test
-```
-
-Unit test mencakup:
-1. Dispatch 1 event ke 1 handler.
-2. Dispatch 1 event ke multiple handler.
-3. Error di handler tidak menggagalkan dispatch.
-
----
-
-## ⚠️ Non-Goals
-
-Eventra **tidak** mendukung (dan tidak akan mendukung):
-
-- ❌ Event Sourcing (menyimpan semua event di database)
-- ❌ Outbox Pattern
-- ❌ Distributed Event (Kafka, RabbitMQ)
-- ❌ Event versioning
-- ❌ Retry otomatis
-
-Fokus pada **in-process domain event** yang sederhana dan mudah dipahami.
-
-Kalau butuh fitur di atas, gunakan library khusus seperti:
-- [EventFlow](https://github.com/eventflow/EventFlow) — Event Sourcing
-- [Marten](https://martendb.io/) — Event Sourcing di PostgreSQL
-- [MassTransit](https://masstransit.io/) — Distributed messaging
-
----
-
-## 🤝 Contributing
-
-Kontribusi selalu diterima! Silakan:
-
-1. Fork repository ini.
-2. Buat branch fitur (`git checkout -b feature/AmazingFeature`).
-3. Commit perubahan (`git commit -m 'Add some AmazingFeature'`).
-4. Push ke branch (`git push origin feature/AmazingFeature`).
-5. Buat Pull Request.
-
-Lihat [CONTRIBUTING.md](.github/CONTRIBUTING.md) untuk detail.
+📖 **Detail:** [eventra.dev/docs/error-handling](https://azizp2.github.io/EventraDocs/error-handling)
 
 ---
 
@@ -395,32 +291,14 @@ Lihat [CONTRIBUTING.md](.github/CONTRIBUTING.md) untuk detail.
 
 | Requirement | Versi |
 | :--- | :--- |
-| **.NET** | 8.0 atau 10.0 |
-| **MediatR** | ≥ 12.0 |
-| **EF Core** | ≥ 8.0 (opsional, hanya untuk `Eventra.EntityFrameworkCore`) |
+| **.NET** | 10.0 |
+| **EF Core** | ≥ 10.0 (opsional) |
 
 ---
 
 ## 📄 License
 
-Distributed under the **MIT License**. Lihat [LICENSE](LICENSE) untuk detail.
-
----
-
-## 📚 Referensi
-
-- [Domain Events by Martin Fowler](https://martinfowler.com/eaaDev/DomainEvent.html)
-- [MediatR GitHub](https://github.com/jbogard/MediatR)
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [EF Core Docs](https://learn.microsoft.com/en-us/ef/core/)
-
----
-
-## 🙏 Acknowledgements
-
-- [Jimmy Bogard](https://github.com/jbogard) — MediatR
-- [Martin Fowler](https://martinfowler.com/) — Domain Events concept
-- [Robert C. Martin](https://blog.cleancoder.com/) — Clean Architecture
+Distributed under the **MIT License**. Lihat [LICENSE](LICENSE).
 
 ---
 
@@ -428,6 +306,8 @@ Distributed under the **MIT License**. Lihat [LICENSE](LICENSE) untuk detail.
 
 **Made with ❤️ for the .NET community.**
 
-[⬆ Back to Top](#-eventra)
+🌐 [eventra docs](https://azizp2.github.io/EventraDocs/) •
+📖 [Documentation](https://azizp2.github.io/EventraDocs/) •
+🐛 [Issues](https://github.com/azizp2/Eventra/issues)
 
 </div>

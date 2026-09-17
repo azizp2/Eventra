@@ -1,4 +1,4 @@
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 
 namespace Eventra.Core.BaseClasses;
 
@@ -40,7 +40,6 @@ public abstract class Entity<TId> : IHasDomainEvents
 
 /// <summary>
 /// Base class untuk entity dengan identitas <see cref="Guid"/>.
-/// Alias untuk backward compatibility.
 /// </summary>
 public abstract class Entity : Entity<Guid>
 {

@@ -1,13 +1,12 @@
 using System.Reflection;
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 using Eventra.Core.Dispatchers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Eventra.Core.Extensions;
 
-
 /// <summary>
-/// Extension methods untuk registrasi domain event framework ke DI container.
+/// Extension methods untuk registrasi Eventra ke DI container.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
@@ -21,17 +20,37 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         params Assembly[] assemblies)
     {
-        // Dispatcher sebagai Scoped karena bergantung pada IMediator (yang juga Scoped).
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(assemblies);
+
+        // Dispatcher sebagai Scoped karena bergantung pada IServiceProvider.
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
-        // MediatR akan otomatis scan semua INotificationHandler<> di assembly.
-        // Karena IDomainEventHandler<T> mewarisi INotificationHandler<T>,
-        // semua handler kita akan ter-register.
-        services.AddMediatR(cfg =>
+        // Scan semua handler di assembly yang diberikan.
+        foreach (var assembly in assemblies)
         {
-            cfg.RegisterServicesFromAssemblies(assemblies);
-        });
+            RegisterHandlersFromAssembly(services, assembly);
+        }
 
         return services;
     }
-}
+
+    private static void RegisterHandlersFromAssembly(
+        IServiceCollection services,
+        Assembly assembly)
+    {
+        var handlerInterfaceType = typeof(IDomainEventHandler<>);
+
+        var handlerTypes = assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && !t.IsInterface)
+            .SelectMany(t => t.GetInterfaces()
+                .Where(i => i.IsGenericType &&
+                            i.GetGenericTypeDefinition() == handlerInterfaceType)
+                .Select(i => new { Implementation = t, Interface = i }));
+
+        foreach (var handler in handlerTypes)
+        {
+            services.AddScoped(handler.Interface, handler.Implementation);
+        }
+    }
+}   
