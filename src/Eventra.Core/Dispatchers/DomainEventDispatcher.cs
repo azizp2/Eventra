@@ -1,33 +1,27 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Eventra.Core.Abstractions;
-using MediatR;
+using Eventra.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Eventra.Core.Dispatchers;
 
 /// <summary>
 /// Implementasi default dari <see cref="IDomainEventDispatcher"/>.
-/// Menggunakan MediatR untuk mem-publish event ke semua handler-nya.
+/// Resolve handler langsung dari DI container — tanpa MediatR.
 /// </summary>
-/// 
 public sealed class DomainEventDispatcher : IDomainEventDispatcher
 {
-    private readonly IMediator _mediator;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<DomainEventDispatcher> _logger;
 
     public DomainEventDispatcher(
-        IMediator mediator,
+        IServiceProvider serviceProvider,
         ILogger<DomainEventDispatcher> logger)
     {
-        _mediator = mediator;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
     /// <inheritdoc />
-    /// 
     public async Task DispatchAsync(
         IEnumerable<IDomainEvent> domainEvents,
         CancellationToken cancellationToken = default)
@@ -41,7 +35,7 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
                     domainEvent.GetType().Name,
                     domainEvent.Id);
 
-                await _mediator.Publish(domainEvent, cancellationToken);
+                await DispatchSingleEventAsync(domainEvent, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -53,6 +47,34 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
                     domainEvent.GetType().Name,
                     domainEvent.Id);
             }
+        }
+    }
+
+    private async Task DispatchSingleEventAsync(
+        IDomainEvent domainEvent,
+        CancellationToken cancellationToken)
+    {
+        // Cari tipe handler: IDomainEventHandler<TEvent>
+        var handlerType = typeof(IDomainEventHandler<>)
+            .MakeGenericType(domainEvent.GetType());
+
+        // Resolve SEMUA handler yang implement IDomainEventHandler<TEvent>
+        var handlers = _serviceProvider.GetServices(handlerType);
+
+        // Ambil method HandleAsync
+        var method = handlerType.GetMethod(
+            nameof(IDomainEventHandler<IDomainEvent>.HandleAsync))!;
+
+        // Panggil HandleAsync pada masing-masing handler
+        foreach (var handler in handlers)
+        {
+            if (handler is null) continue;
+
+            var task = (Task)method.Invoke(
+                handler,
+                new object[] { domainEvent, cancellationToken })!;
+
+            await task;
         }
     }
 }

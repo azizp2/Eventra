@@ -1,8 +1,7 @@
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Eventra.EntityFrameworkCore.Extensions;
-
 
 /// <summary>
 /// Extension methods untuk integrasi domain event dengan EF Core.
@@ -17,11 +16,48 @@ public static class DbContextExtensions
     /// <param name="dispatcher">Domain event dispatcher.</param>
     /// <param name="cancellationToken">Token pembatalan.</param>
     /// <returns>Jumlah state entry yang tersimpan.</returns>
+    /// <remarks>
+    /// <para>
+    /// Alur method ini:
+    /// </para>
+    /// <list type="number">
+    ///   <item>Kumpulkan entity yang punya domain event <b>sebelum</b> SaveChanges.</item>
+    ///   <item>Snapshot event ke list terpisah (karena entity akan di-clear).</item>
+    ///   <item>Panggil <see cref="DbContext.SaveChangesAsync(CancellationToken)"/>.</item>
+    ///   <item>Clear domain event dari entity <b>setelah</b> SaveChanges sukses.</item>
+    ///   <item>Dispatch event ke handler <b>setelah</b> commit sukses.</item>
+    /// </list>
+    /// <para>
+    /// Jika <c>SaveChangesAsync</c> gagal, event <b>tidak</b> akan di-dispatch
+    /// dan <b>tidak</b> akan di-clear — sehingga bisa di-retry di masa depan.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// public async Task&lt;Guid&gt; Handle(
+    ///     CreateProductCommand request,
+    ///     CancellationToken cancellationToken)
+    /// {
+    ///     var product = Product.Create(request.Name);
+    ///     _dbContext.Products.Add(product);
+    ///
+    ///     // Commit + dispatch event otomatis.
+    ///     await _dbContext.SaveChangesAndDispatchEventsAsync(
+    ///         _dispatcher,
+    ///         cancellationToken);
+    ///
+    ///     return product.Id;
+    /// }
+    /// </code>
+    /// </example>
     public static async Task<int> SaveChangesAndDispatchEventsAsync(
         this DbContext context,
         IDomainEventDispatcher dispatcher,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(dispatcher);
+
         // 1. Ambil semua entity yang punya domain event PENDING.
         //    Kita lakukan ini SEBELUM SaveChanges agar tidak terpengaruh
         //    oleh state changes yang mungkin ditambahkan EF Core.
@@ -38,13 +74,12 @@ public static class DbContextExtensions
             .ToList();
 
         // 3. Simpan perubahan ke database. Jika gagal, exception akan dilempar
-        //    dan event TIDAK akan di-dispatch (sesuai requirement F-09 & F-10).
+        //    dan event TIDAK akan di-dispatch.
         var result = await context.SaveChangesAsync(cancellationToken);
 
         // 4. Clear event dari entity.
         //    Kenapa setelah SaveChanges? Karena kalau SaveChanges gagal,
-        //    event harus tetap tersimpan agar bisa di-retry di masa depan
-        //    (walaupun saat ini belum ada retry mechanism).
+        //    event harus tetap tersimpan agar bisa di-retry di masa depan.
         //    Setelah sukses, event sudah tidak diperlukan lagi.
         foreach (var entity in entitiesWithEvents)
         {

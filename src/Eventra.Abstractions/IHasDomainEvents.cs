@@ -1,7 +1,13 @@
-using System.Collections.Generic;
+namespace Eventra.Abstractions;
 
-namespace Eventra.Core.Abstractions;
-
+/// <summary>
+/// Kontrak untuk entity yang memiliki domain event pending.
+/// </summary>
+/// <remarks>
+/// Biasanya diimplementasikan oleh base class <c>Entity</c> di
+/// <c>Eventra.Core</c>. Tapi bisa juga diimplementasikan manual
+/// jika ingin kontrol penuh.
+/// </remarks>
 public interface IHasDomainEvents
 {
     /// <summary>
