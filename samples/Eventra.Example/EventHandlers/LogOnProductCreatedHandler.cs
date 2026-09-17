@@ -1,4 +1,4 @@
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 using Eventra.SampleApp.Events;
 using Microsoft.Extensions.Logging;
 
@@ -8,22 +8,12 @@ namespace Eventra.SampleApp.Handlers;
 /// Handler kedua untuk event yang sama — membuktikan bahwa
 /// satu event bisa punya banyak handler.
 /// </summary>
-public sealed class LogOnProductCreatedHandler
+public sealed class LogOnProductCreatedHandler(ILogger<LogOnProductCreatedHandler> logger)
     : IDomainEventHandler<ProductCreatedEvent>
 {
-    private readonly ILogger<LogOnProductCreatedHandler> _logger;
-
-    public LogOnProductCreatedHandler(
-        ILogger<LogOnProductCreatedHandler> logger)
+    public Task HandleAsync(ProductCreatedEvent notification, CancellationToken cancellationToken = default)
     {
-        _logger = logger;
-    }
-
-    public Task Handle(
-        ProductCreatedEvent notification,
-        CancellationToken cancellationToken)
-    {
-        _logger.LogInformation(
+        logger.LogInformation(
             "📝 [AUDIT LOG] Produk '{Name}' dibuat pada {OccurredOn} UTC.",
             notification.ProductName,
             notification.OccurredOn);

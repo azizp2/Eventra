@@ -1,8 +1,9 @@
+using Eventra.Core.BaseClasses;
 using Eventra.SampleApp.Events;
 
 namespace Eventra.SampleApp.Entity;
 
-public class Product : Core.BaseClasses.Entity
+public class Product : AggregateRoot
 {
     public string Name { get; private set; } = string.Empty;
 
@@ -15,6 +16,9 @@ public class Product : Core.BaseClasses.Entity
     /// </summary>
     public static Product Create(string name)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+        
         var product = new Product
         {
             Id = Guid.NewGuid(),
