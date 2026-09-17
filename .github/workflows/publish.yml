@@ -3,47 +3,152 @@ name: Publish to NuGet
 on:
   release:
     types: [published]
-  workflow_dispatch: # Memungkinkan trigger manual dari tab Actions
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Environment ini harus cocok dengan yang di policy NuGet.org (jika diisi)
-    environment: release 
+    environment: release
     permissions:
-      id-token: write # Wajib untuk OIDC
+      id-token: write
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+
+      # ===== Tentukan versi dari Git tag =====
+      - name: Determine version
+        id: version
+        run: |
+          # Ambil tag dari release event
+          TAG="${{ github.event.release.tag_name }}"
+          echo "📌 Git tag: $TAG"
           
+          # Strip "v" prefix (v0.3.0-beta.2 → 0.3.0-beta.2)
+          VERSION="${TAG#v}"
+          echo "📌 Version: $VERSION"
+          
+          # Validasi: versi harus ada
+          if [ -z "$VERSION" ]; then
+            echo "❌ Version is empty!"
+            exit 1
+          fi
+          
+          # Validasi: versi harus format SemVer
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+            echo "❌ Invalid SemVer format: $VERSION"
+            echo "   Expected: X.Y.Z or X.Y.Z-suffix (e.g., 0.3.0-beta.1)"
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "✅ Final version: $VERSION"
+
+      # ===== Restore =====
       - name: Restore dependencies
         run: dotnet restore
-        
+
+      # ===== Build =====
       - name: Build
-        run: dotnet build --configuration Release --no-restore
-        
+        run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }}
+
+      # ===== Test =====
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      # ===== Verify version not exists =====
+      - name: Verify version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          echo "🔍 Checking if version $VERSION exists on NuGet..."
+          
+          if curl -s "https://api.nuget.org/v3-flatcontainer/eventra.core/index.json" | grep -q "\"$VERSION\""; then
+            echo "❌ Version $VERSION already exists on NuGet!"
+            exit 1
+          fi
+          
+          echo "✅ Version $VERSION is available"
+
+      # ===== Pack =====
+      - name: Pack Abstractions
+        run: |
+          dotnet pack src/Eventra.Abstractions/Eventra.Abstractions.csproj \
+            -c Release \
+            -o ./nupkg \
+            --no-build \
+            -p:Version=${{ steps.version.outputs.version }} \
+            --include-symbols \
+            -p:SymbolPackageFormat=snupkg
+
       - name: Pack Core
-        run: dotnet pack src/Eventra.Core/Eventra.Core.csproj -c Release -o ./nupkg --no-build
-        
+        run: |
+          dotnet pack src/Eventra.Core/Eventra.Core.csproj \
+            -c Release \
+            -o ./nupkg \
+            --no-build \
+            -p:Version=${{ steps.version.outputs.version }} \
+            --include-symbols \
+            -p:SymbolPackageFormat=snupkg
+
       - name: Pack EFCore
-        run: dotnet pack src/Eventra.EntityFrameworkCore/Eventra.EntityFrameworkCore.csproj -c Release -o ./nupkg --no-build
-        
+        run: |
+          dotnet pack src/Eventra.EntityFrameworkCore/Eventra.EntityFrameworkCore.csproj \
+            -c Release \
+            -o ./nupkg \
+            --no-build \
+            -p:Version=${{ steps.version.outputs.version }} \
+            --include-symbols \
+            -p:SymbolPackageFormat=snupkg
+
+      # ===== Upload artifacts =====
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-${{ steps.version.outputs.version }}
+          path: ./nupkg/*
+
+      # ===== NuGet login (OIDC) =====
       - name: NuGet login (OIDC → temp API key)
         uses: NuGet/login@v1
         id: login
         with:
-          # Menggunakan secret NUGET_USER yang sudah dibuat
           user: ${{ secrets.NUGET_USER }}
-          
-      - name: Push to NuGet
+
+      # ===== Push packages =====
+      - name: Push packages to NuGet
         run: |
           dotnet nuget push ./nupkg/*.nupkg \
             --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
+
+      # ===== Push symbols =====
+      - name: Push symbols to NuGet
+        run: |
+          if ls ./nupkg/*.snupkg 1> /dev/null 2>&1; then
+            dotnet nuget push ./nupkg/*.snupkg \
+              --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          else
+            echo "⚠️ No .snupkg files found, skipping symbol push"
+          fi
+        continue-on-error: true
+
+      # ===== Summary =====
+      - name: Summary
+        run: |
+          echo "## 🎉 Published Eventra v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Packages" >> $GITHUB_STEP_SUMMARY
+          echo "- [Eventra.Abstractions](https://www.nuget.org/packages/Eventra.Abstractions/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Eventra.Core](https://www.nuget.org/packages/Eventra.Core/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Eventra.EntityFrameworkCore](https://www.nuget.org/packages/Eventra.EntityFrameworkCore/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
