@@ -1,14 +1,13 @@
-using Eventra.Core.Abstractions;
+using Eventra.Abstractions;
 using Eventra.EntityFrameworkCore.Extensions;
 using Eventra.SampleApp.Commands;
 using Eventra.SampleApp.Data;
 using Eventra.SampleApp.Entity;
-using MediatR;
 
 namespace Eventra.SampleApp.Handlers;
 
 public sealed class CreateProductCommandHandler
-    : IRequestHandler<CreateProductCommand, Guid>
+    : ICommandHandler<CreateProductCommand, Guid>
 {
     private readonly AppDbContext _dbContext;
     private readonly IDomainEventDispatcher _dispatcher;
@@ -21,9 +20,7 @@ public sealed class CreateProductCommandHandler
         _dispatcher = dispatcher;
     }
 
-    public async Task<Guid> Handle(
-        CreateProductCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Guid> HandleAsync(CreateProductCommand request, CancellationToken cancellationToken = default)
     {
         var product = Product.Create(request.Name);
 
