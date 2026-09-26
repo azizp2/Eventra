@@ -90,4 +90,33 @@ public class EntityTests
         // Coba cast ke List<T> — harus null
         Assert.Null(entity.DomainEvents as List<Eventra.Abstractions.IDomainEvent>);
     }
+
+    private class GenericEntity<TId> : Entity<TId> where TId : notnull
+    {
+        public GenericEntity(TId id) => Id = id;
+    }
+
+    [Fact]
+    public void Entity_Should_Support_Custom_TId()
+    {
+        // Act
+        var intEntity = new GenericEntity<int>(42);
+        var stringEntity = new GenericEntity<string>("order-123");
+
+        // Assert
+        Assert.Equal(42, intEntity.Id);
+        Assert.Equal("order-123", stringEntity.Id);
+    }
+
+    private class TestEntityWithNullHelper : TestEntity
+    {
+        public void CallRaiseWithNull() => RaiseDomainEvent(null!);
+    }
+
+    [Fact]
+    public void RaiseDomainEvent_With_Null_Should_Throw_ArgumentNullException()
+    {
+        var entity = new TestEntityWithNullHelper();
+        Assert.Throws<ArgumentNullException>(() => entity.CallRaiseWithNull());
+    }
 }

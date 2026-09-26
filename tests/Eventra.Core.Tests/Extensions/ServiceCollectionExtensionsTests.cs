@@ -73,4 +73,29 @@ public class ServiceCollectionExtensionsTests
         Assert.Throws<ArgumentNullException>(() =>
             services.AddEventra(null!));
     }
+
+    public sealed class AnotherScanTestHandler : IDomainEventHandler<ScanTestEvent>
+    {
+        public Task HandleAsync(ScanTestEvent domainEvent, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
+    [Fact]
+    public void AddEventra_Should_Register_Multiple_Handlers_For_Same_Event()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        // Act
+        services.AddEventra(typeof(ScanTestHandler).Assembly);
+
+        // Assert
+        var descriptors = services.Where(d =>
+            d.ServiceType == typeof(IDomainEventHandler<ScanTestEvent>)).ToList();
+
+        Assert.True(descriptors.Count >= 2);
+        Assert.Contains(descriptors, d => d.ImplementationType == typeof(ScanTestHandler));
+        Assert.Contains(descriptors, d => d.ImplementationType == typeof(AnotherScanTestHandler));
+    }
 }
