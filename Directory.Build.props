@@ -1,16 +1,11 @@
 <Project>
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <!-- Version terpusat -->
-<!--        <Version>0.2.0</Version>-->
-<!--        <FileVersion>0.2.0.0</FileVersion>-->
-<!--        <AssemblyVersion>0.2.0.0</AssemblyVersion>-->
         <Version Condition="'$(Version)' == ''">0.0.0-local</Version>
 
         <!-- FileVersion & AssemblyVersion — dihitung dari $(Version) -->
         <FileVersion>$(Version.Split('-')[0]).0</FileVersion>
         <AssemblyVersion>$(Version.Split('-')[0]).0</AssemblyVersion>
-
 
         <!-- Metadata umum -->
         <Authors>Abdul Azis</Authors>
@@ -25,7 +20,7 @@
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <GenerateDocumentationFile Condition="'$(IsPackable)' != 'false'">true</GenerateDocumentationFile>
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     </PropertyGroup>
 </Project>

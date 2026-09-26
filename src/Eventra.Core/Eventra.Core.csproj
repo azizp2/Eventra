@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Eventra.Core</PackageId>
-    <Description>Lightweight Domain Events for .NET — Simple, Clean, Zero Dependency."</Description>
+    <Description>Lightweight Domain Events for .NET — Simple, Clean, Zero Dependency.</Description>
     <PackageTags>dotnet;csharp;domain-events;ddd;clean-architecture;event-driven;mediatr-alternative;zero-dependency</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
